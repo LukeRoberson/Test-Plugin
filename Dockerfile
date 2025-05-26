@@ -1,6 +1,7 @@
 # Use the official Python image from the Docker Hub
-FROM python:3.12.10-alpine
-LABEL maintainer="Luke Robertson <lrobertson@lakemac.nsw.gov.au>"
+FROM python:3.12-alpine
+LABEL description="A simple test plugin for the AI assistant. This can be used to test the plugin system. Send webhooks with a browser, cURL, or Postman."
+LABEL version="1.0.0"
 
 # Create non-root user with no password
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
