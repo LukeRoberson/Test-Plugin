@@ -34,8 +34,11 @@ Plugin parses and filters the incoming webhook request,
 
 from flask import Flask, request
 import requests
-from colorama import Fore, Style
+import logging
 
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 
@@ -46,31 +49,31 @@ def webhook():
     data = request.get_json()
     alert = {
         "source": "Test Plugin",
-        "type": data['type'],
-        "timestamp": data["timestamp"],
-        "message": (
-            f"Foo: {data['data']['foo']}, FizzBuzz: {data['data']['fizzbuzz']}"
-        )
+        "destination": ["web"],
+        "log": {
+            "type": data['type'],
+            "timestamp": data["timestamp"],
+            "message": (
+                f"Foo: {
+                    data['data']['foo']
+                }, FizzBuzz: {
+                    data['data']['fizzbuzz']
+                }"
+            )
+        }
     }
 
     # Debug - print the alert
-    print(
-        Fore.YELLOW,
-        "DEBUG: Parsed alert:",
-        alert,
-        Style.RESET_ALL
-    )
+    logging.info("Parsed alert: %s", alert)
 
     # Send the alert to the logging service
     response = requests.post(
-        "http://web-interface:5100/api/webhook",
+        "http://logging:5100/api/webhook",
         json=alert
     )
-    print(
-        Fore.YELLOW,
-        "DEBUG: Sent alert to logging service:",
-        response.status_code,
-        Style.RESET_ALL
+    logging.info(
+        "Sent alert to logging service: %s",
+        response.status_code
     )
 
     return "Received", 200
