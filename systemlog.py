@@ -145,10 +145,10 @@ class SystemLog:
 # Initialize the SystemLog with default values
 system_log = SystemLog(
     logging_url="http://logging:5100/api/log",
-    source="web-interface",
+    source="webhook-plugin",
     destination=["web"],
-    group="service",
-    category="web-ui",
+    group="plugin",
+    category="test webhook",
     alert="system",
     severity="info"
 )
