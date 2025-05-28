@@ -14,6 +14,29 @@ import logging
 from datetime import datetime
 
 
+# Get global config
+global_config = None
+try:
+    response = requests.get("http://web-interface:5100/api/config", timeout=3)
+    response.raise_for_status()  # Raise an error for bad responses
+    global_config = response.json()
+
+except Exception as e:
+    logging.critical(
+        "Failed to fetch global config from web interface."
+        f" Error: {e}"
+    )
+
+if global_config is None:
+    raise RuntimeError("Could not load global config from web interface")
+
+# Set up logging
+log_level_str = global_config['config']['web']['logging-level'].upper()
+log_level = getattr(logging, log_level_str, logging.INFO)
+logging.basicConfig(level=log_level)
+logging.info("Logging level set to: %s", log_level_str)
+
+
 def send_log(
     message: str,
     url: str = "http://logging:5100/api/log",
@@ -62,9 +85,6 @@ def send_log(
             e
         )
 
-
-# Set up logging
-logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 
