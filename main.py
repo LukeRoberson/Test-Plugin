@@ -4,30 +4,6 @@ Test webhook plugin
 Uses Flask to create a simple web application that listens
     for incoming webhook requests.
 
-Usage:
-    Run this module to start the web application.
-
-Example:
-    $ python main.py
-
-Example webhook body that this might receive (JSON):
-    {
-        "type": "example.event",
-        "timestamp": "2022-11-03T20:26:10.344522Z",
-        "data": {
-            "foo": "bar",
-            "fizzbuzz": 2
-        }
-    }
-
-Webhook format that this would send (JSON) to the logging service:
-    {
-        "source": "<PLUGIN-NAME>",
-        "type": "<EVENT>",
-        "timestamp": "<DATE-AND-TIME>",
-        "message": "<MESSAGE STRING>"
-    }
-
 Plugin parses and filters the incoming webhook request,
     and sends a formatted message to the logging service.
 """
@@ -35,6 +11,56 @@ Plugin parses and filters the incoming webhook request,
 from flask import Flask, request
 import requests
 import logging
+from datetime import datetime
+
+
+def send_log(
+    message: str,
+    url: str = "http://logging:5100/api/log",
+    source: str = "test-plugin",
+    destination: list = ["web"],
+    group: str = "plugin",
+    category: str = "test",
+    alert: str = "event",
+    severity: str = "info",
+) -> None:
+    """
+    Send a message to the logging service.
+
+    Args:
+        message (str): The message to send.
+        url (str): The URL of the logging service API.
+        source (str): The source of the log message.
+        destination (list): The destinations for the log message.
+        group (str): The group to which the log message belongs.
+        category (str): The category of the log message.
+        alert (str): The alert type for the log message.
+        severity (str): The severity level of the log message.
+    """
+
+    # Send a log as a webhook to the logging service
+    try:
+        requests.post(
+            url,
+            json={
+                "source": source,
+                "destination": destination,
+                "log": {
+                    "group": group,
+                    "category": category,
+                    "alert": alert,
+                    "severity": severity,
+                    "timestamp": str(datetime.now()),
+                    "message": message
+                }
+            },
+            timeout=3
+        )
+    except Exception as e:
+        logging.warning(
+            "Failed to send log to logging service. %s",
+            e
+        )
 
 
 # Set up logging
@@ -67,14 +93,8 @@ def webhook():
     logging.info("Parsed alert: %s", alert)
 
     # Send the alert to the logging service
-    response = requests.post(
-        "http://logging:5100/api/webhook",
-        json=alert
-    )
-    logging.info(
-        "Sent alert to logging service: %s",
-        response.status_code
-    )
+    send_log(message=alert)
+    logging.info("Sent alert to logging service: %s")
 
     return "Received", 200
 
